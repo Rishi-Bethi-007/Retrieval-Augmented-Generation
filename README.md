@@ -287,8 +287,7 @@ This project was built as part of a deliberate transition from ML theory → AI 
 Systems thinking
 
 
-
-
+## FLOW OF THE PROJECT:
 
 
 The full flow of your project (end-to-end, very detailed)
