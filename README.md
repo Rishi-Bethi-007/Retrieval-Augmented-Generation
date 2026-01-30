@@ -201,7 +201,7 @@ Query: Who won the 2035 Cricket World Cup?
   "confidence": 0.3,
   "used_sources": []
 }
-
+```
 
 This refusal is intentional and correct — no hallucination.
 
