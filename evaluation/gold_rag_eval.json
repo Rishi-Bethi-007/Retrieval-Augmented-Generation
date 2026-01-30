@@ -1,0 +1,26 @@
+[
+  {
+    "id": "q1",
+    "query": "What is a vector database?",
+    "expected_doc": "vector_databases.txt",
+    "answerable": true
+  },
+  {
+    "id": "q2",
+    "query": "What is FAISS used for?",
+    "expected_doc": "faiss_overview.txt",
+    "answerable": true
+  },
+  {
+    "id": "q3",
+    "query": "Why do we chunk documents?",
+    "expected_doc": "chunking.txt",
+    "answerable": true
+  },
+  {
+    "id": "q4",
+    "query": "Who won the 2035 Cricket World Cup?",
+    "expected_doc": null,
+    "answerable": false
+  }
+]

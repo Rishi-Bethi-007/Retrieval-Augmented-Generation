@@ -1,62 +1,42 @@
 import json
-import argparse
-
-import faiss
-
-from embeddings.embedder import Embedder
-from index.search import search, rank_documents
-
+from index.search import FaissRetriever
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--queries_path", type=str, default="evaluation/queries.json")
-    parser.add_argument("--index_path", type=str, default="index/chunk_index.faiss")
-    parser.add_argument("--meta_path", type=str, default="index/chunk_metadata.json")
-    parser.add_argument("--top_k_chunks", type=int, default=10)
-    parser.add_argument("--top_k_docs", type=int, default=3)
-    args = parser.parse_args()
+    retriever = FaissRetriever(
+        index_path="index/chunk_index.faiss",
+        meta_path="index/chunk_metadata.json",
+    )
 
-    with open(args.queries_path, "r", encoding="utf-8") as f:
-        tests = json.load(f)
+    gold = json.load(open("evaluation/gold_rag_eval.json", "r", encoding="utf-8"))
 
-    index = faiss.read_index(args.index_path)
-    with open(args.meta_path, "r", encoding="utf-8") as f:
-        metadata = json.load(f)
+    hit3 = 0
+    total = 0
 
-    if index.ntotal != len(metadata):
-        raise ValueError(f"Index vectors ({index.ntotal}) != metadata rows ({len(metadata)})")
+    for g in gold:
+        q = g["query"]
+        expected = g["expected_doc"]
 
-    embedder = Embedder()
+        chunks = retriever.retrieve(q, top_k=8)
 
-    hits = 0
-    for t in tests:
-        query = t["query"]
-        expected = t["expected_doc"]
+        # unique docs in retrieved order
+        top_docs = []
+        for c in chunks:
+            if c["doc_id"] not in top_docs:
+                top_docs.append(c["doc_id"])
 
-        chunk_results = search(
-            query=query,
-            embedder=embedder,
-            index=index,
-            metadata=metadata,
-            top_k=args.top_k_chunks,
-        )
-        doc_ranks = rank_documents(chunk_results)
+        top3 = top_docs[:3]
 
-        top_docs = [d["doc_id"] for d in doc_ranks[: args.top_k_docs]]
-        ok = expected in top_docs
+        total += 1
+        ok = (expected in top3) if expected else (len(top3) == 0)
+        hit3 += int(ok)
 
-        hits += int(ok)
-        status = "✅ HIT" if ok else "❌ MISS"
+        print("\nQuery:", q)
+        print("Expected:", expected)
+        print("Top-3 docs:", top3)
+        print("✅ HIT" if ok else "❌ MISS")
 
-        print(f"\nQuery: {query}")
-        print(f"Expected: {expected}")
-        print(f"Top-{args.top_k_docs} docs: {top_docs}")
-        print(status)
-
-    total = len(tests)
     print("\n=== SUMMARY ===")
-    print(f"Doc Hit@{args.top_k_docs}: {hits}/{total} = {hits/total:.2%}")
-
+    print(f"Doc Hit@3: {hit3}/{total} = {hit3/total:.2%}")
 
 if __name__ == "__main__":
     main()
